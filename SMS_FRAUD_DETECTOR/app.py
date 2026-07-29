@@ -1,12 +1,8 @@
 import streamlit as st
-import pandas as pd
 import numpy as np
 import re
 import string
 import joblib
-import easyocr
-from PIL import Image
-import os
 
 # ==========================================
 # 1. PAGE CONFIGURATION & CUSTOM CSS
@@ -69,43 +65,31 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 2. LOAD MODELS 
+# 2. LOAD MODELS
 # ==========================================
-
 @st.cache_resource
 def load_models():
-    """Load the trained ML models and OCR engine."""
+    """Load the trained ML models."""
     import os
-    
-    # Get the exact folder where app.py is located
     current_folder = os.path.dirname(os.path.abspath(__file__))
-    
-    # EXACT file names - do not change these!
     model_path = os.path.join(current_folder, 'sms_fraud_model.pkl')
     vectorizer_path = os.path.join(current_folder, 'sms_vectorizer.pkl')
     
     try:
-        # 1. Load the ML models
         model = joblib.load(model_path)
         vectorizer = joblib.load(vectorizer_path)
-        
-        # 2. Load EasyOCR
-        reader = easyocr.Reader(['en'], gpu=False)
-        
-       
-        
-        return model, vectorizer, reader
+        return model, vectorizer
     except Exception as e:
         st.error(f"❌ Failed to load models. Error: {e}")
-        return None, None, None
+        return None, None
 
-# Load the models with a loading spinner
-with st.spinner("⏳ Loading AI models and downloading OCR engine (this takes 2-3 minutes on first run)..."):
-    model, vectorizer, reader = load_models()
+model, vectorizer = load_models()
 
+if model is None:
+    st.stop()
 
 # ==========================================
-# 3. HELPER FUNCTIONS (Must be at the very start of the line)
+# 3. HELPER FUNCTIONS
 # ==========================================
 def clean_text(text):
     text = str(text).lower()
@@ -124,30 +108,14 @@ def rule_based_scam_check(text):
                      'pin', 'transfer', 'inheritance', 'beneficiary', 'work', 
                      'home', 'mobile', 'daily', 'part-time', 'invest',
                      'bank', 'manager', 'unclaimed', 'funds', 'million', 
-                     'dollars', 'help me', 'dear friend', 'foreign']
+                     'dollars', 'help me', 'dear friend', 'foreign', 'whatsapp',
+                     'telegram', 'join', 'earn', 'minutes', 'payment']
     
     matched_keywords = [k for k in scam_keywords if k in text_lower]
     
     if (has_phone and len(matched_keywords) >= 1) or (len(matched_keywords) >= 3):
         return True, matched_keywords
     return False, []
-
-def extract_text_from_image(image, reader):
-    """Extracts text from an uploaded screenshot using OCR."""
-    if image is None or reader is None:
-        return ""
-    try:
-        image_np = np.array(image)
-        results = reader.readtext(image_np)
-        
-        # If OCR finds nothing, return empty string
-        if not results:
-            return ""
-            
-        return " ".join([result[1] for result in results]).strip()
-    except Exception as e:
-        st.error(f"❌ OCR Error: Could not read text from this image. Please try a clearer screenshot or paste the text manually.")
-        return ""
 
 # ==========================================
 # 4. MAIN APP UI
@@ -159,62 +127,71 @@ st.markdown("---")
 with st.sidebar:
     st.header("📱 How to Use")
     st.markdown("""
-    **Option 1: Paste Text**
-    1. Copy the SMS message
-    2. Paste in the text box
-    3. Click Analyze
+    1. Copy the suspicious SMS message.
+    2. Paste it into the text box below.
+    3. Click **Analyze Message**.
     
-    **Option 2: Upload Screenshot**
-    1. Take screenshot
-    2. Upload the image
-    3. Click Analyze
+    ---
+    
+    **Features:**
+    - ✅ Hybrid AI Detection
+    - ✅ Keyword Insights
+    - ✅ Confidence Scoring
+    - ✅ Nigerian Context Aware
     """)
 
-st.subheader(" Input Your Message")
-input_method = st.radio("Choose input method:", ["Paste Text", "Upload Screenshot"], horizontal=True)
+st.subheader("🔽 Input Your Message")
+message_text = st.text_area("Paste SMS message here:", 
+                       placeholder="Example: Dear, do you need a part-time job? You don't need to invest...",
+                       height=150)
 
-message_text = ""
-uploaded_image = None
+analyze_btn = st.button(" Analyze Message", use_container_width=True)
 
-if input_method == "Paste Text":
-    message_text = st.text_area("Paste SMS message here:", 
-                           placeholder="Example: Congratulations! You have won 1,000,000 Naira...",
-                           height=150)
-else:
-    uploaded_image = st.file_uploader("Upload screenshot of SMS", type=['png', 'jpg', 'jpeg'])
+# ==========================================
+# EXAMPLE MESSAGES SECTION
+# ==========================================
+st.markdown("---")
+st.subheader(" Try These Examples:")
 
-analyze_btn = st.button("🔍 Analyze Message", use_container_width=True)
+col1, col2, col3, col4 = st.columns(4)
 
+with col1:
+    if st.button("💼 Job Scam", use_container_width=True):
+        st.session_state.example_msg = "Dear, do you need a part-time job? You don't need to invest. Our work is very simple. You only need to spend 10-30 minutes and pay your salary immediately after completing your mobile phone. Earn 60000NGN every day. If you want to join, please add us through WhatsApp."
+
+with col2:
+    if st.button("🎁 APC Reward", use_container_width=True):
+        st.session_state.example_msg = "Your new reward is at congratulation to APC member you are just be Rewarded a token of 91,000 call Emma for your payment(08163700328)"
+
+with col3:
+    if st.button(" Bank Manager", use_container_width=True):
+        st.session_state.example_msg = "Dear friend, I am a bank manager in Nigeria. We have unclaimed funds. Help me transfer and get 20% commission."
+
+with col4:
+    if st.button("✅ Safe Message", use_container_width=True):
+        st.session_state.example_msg = "Hey, are we still meeting for the project review at 2pm today? Let me know if you're coming."
+
+# If an example was clicked, populate the text area
+if 'example_msg' in st.session_state:
+    message_text = st.session_state.example_msg
+    # Clear the example after using it
+    del st.session_state.example_msg
 # ==========================================
 # 5. ANALYSIS LOGIC
 # ==========================================
 if analyze_btn:
-    final_message = ""
-    source = ""
-    
-    if input_method == "Upload Screenshot" and uploaded_image is not None:
-        with st.spinner("📸 Extracting text from image..."):
-            image = Image.open(uploaded_image)
-            final_message = extract_text_from_image(image, reader)
-            source = "Analyzed from screenshot"
-            if not final_message:
-                st.warning("⚠️ Could not extract text from this image.")
-                st.stop()
-    elif input_method == "Paste Text" and message_text:
-        final_message = message_text
-        source = "Analyzed from pasted text"
-    else:
-        st.warning("⚠️ Please enter a message or upload a screenshot first!")
+    if not message_text or len(message_text.strip()) == 0:
+        st.warning("⚠️ Please enter a message first!")
         st.stop()
 
-    with st.spinner("🧠 Analyzing message..."):
-        cleaned_msg = clean_text(final_message)
+    with st.spinner("🧠 Analyzing message patterns..."):
+        cleaned_msg = clean_text(message_text)
         msg_vec = vectorizer.transform([cleaned_msg])
         
         ml_pred = model.predict(msg_vec)[0]
         ml_conf = max(model.predict_proba(msg_vec)[0]) * 100
         
-        is_rule_spam, matched_kw = rule_based_scam_check(final_message)
+        is_rule_spam, matched_kw = rule_based_scam_check(message_text)
         
         if ml_pred.lower() == 'ham' and is_rule_spam:
             final_pred = 'spam'
@@ -243,8 +220,6 @@ if analyze_btn:
             st.markdown(f'<div class="success-box">✅ MESSAGE IS SAFE ✅</div>', unsafe_allow_html=True)
             st.metric("Confidence", f"{ml_conf:.2f}%")
             st.success("No high-risk patterns detected.")
-            
-        st.info(f"Source: {source}")
 
 st.markdown("---")
-st.markdown("<p style='text-align: center; color: #888;'>Built with ❤️ using Streamlit</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #888;'>Built with ❤️ using Streamlit2026</p>", unsafe_allow_html=True)
