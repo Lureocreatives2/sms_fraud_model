@@ -69,14 +69,11 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 2. LOAD MODELS
+# 2. LOAD MODELS (With Path Fix)
 # ==========================================
-@st.cache_resource
 @st.cache_resource
 def load_models():
     """Load the trained ML models and OCR engine."""
-    import os
-    
     # Get the exact folder where app.py is located
     current_folder = os.path.dirname(os.path.abspath(__file__))
     
@@ -92,6 +89,48 @@ def load_models():
     except Exception as e:
         st.error(f"❌ Failed to load models. Looking in: {current_folder}. Error: {e}")
         return None, None, None
+
+# Load the models immediately
+model, vectorizer, reader = load_models()
+
+if model is None:
+    st.stop()
+
+# ==========================================
+# 3. HELPER FUNCTIONS (Must be at the very start of the line)
+# ==========================================
+def clean_text(text):
+    text = str(text).lower()
+    text = re.sub(r'([a-zA-Z])(\d)', r'\1 \2', text)
+    text = re.sub(r'(\d)([a-zA-Z])', r'\1 \2', text)
+    text = text.translate(str.maketrans('', '', string.punctuation))
+    return text
+
+def rule_based_scam_check(text):
+    text_lower = text.lower()
+    phone_pattern = r'(\+234|0)[789][01]\d{8}'
+    has_phone = bool(re.search(phone_pattern, text))
+    
+    scam_keywords = ['reward', 'token', 'congratulation', 'apc', 'salary', 'ngn', 
+                     'naira', 'winner', 'claim', 'prize', 'urgent', 'bvn', 'atm', 
+                     'pin', 'transfer', 'inheritance', 'beneficiary', 'work', 
+                     'home', 'mobile', 'daily', 'part-time', 'invest',
+                     'bank', 'manager', 'unclaimed', 'funds', 'million', 
+                     'dollars', 'help me', 'dear friend', 'foreign']
+    
+    matched_keywords = [k for k in scam_keywords if k in text_lower]
+    
+    if (has_phone and len(matched_keywords) >= 1) or (len(matched_keywords) >= 3):
+        return True, matched_keywords
+    return False, []
+
+def extract_text_from_image(image, reader):
+    if image is None:
+        return ""
+    image_np = np.array(image)
+    results = reader.readtext(image_np)
+    return " ".join([result[1] for result in results]).strip()
+
 # ==========================================
 # 4. MAIN APP UI
 # ==========================================
@@ -113,7 +152,7 @@ with st.sidebar:
     3. Click Analyze
     """)
 
-st.subheader("🔽 Input Your Message")
+st.subheader(" Input Your Message")
 input_method = st.radio("Choose input method:", ["Paste Text", "Upload Screenshot"], horizontal=True)
 
 message_text = ""
@@ -173,7 +212,7 @@ if analyze_btn:
             st.warning(override_note)
             
         if final_pred.lower() == 'spam':
-            st.markdown(f'<div class="danger-box">🚨 FRAUD DETECTED! 🚨</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="danger-box">🚨 FRAUD DETECTED! </div>', unsafe_allow_html=True)
             st.metric("Confidence", f"{ml_conf:.2f}%")
             
             if matched_kw:
