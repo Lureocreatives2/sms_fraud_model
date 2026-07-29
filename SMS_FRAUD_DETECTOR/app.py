@@ -238,50 +238,6 @@ if analyze_btn:
             st.markdown(f'<div class="success-box">✅ MESSAGE IS SAFE ✅</div>', unsafe_allow_html=True)
             st.metric("Confidence", f"{ml_conf:.2f}%")
             st.success("No high-risk patterns detected.")
-# ==========================================
-# 5. ANALYSIS LOGIC
-# ==========================================
-if analyze_btn:
-    if not message_text or len(message_text.strip()) == 0:
-        st.warning("⚠️ Please enter a message first!")
-        st.stop()
-
-    with st.spinner("🧠 Analyzing message patterns..."):
-        cleaned_msg = clean_text(message_text)
-        msg_vec = vectorizer.transform([cleaned_msg])
-        
-        ml_pred = model.predict(msg_vec)[0]
-        ml_conf = max(model.predict_proba(msg_vec)[0]) * 100
-        
-        is_rule_spam, matched_kw = rule_based_scam_check(message_text)
-        
-        if ml_pred.lower() == 'ham' and is_rule_spam:
-            final_pred = 'spam'
-            override_note = "⚠️ **AI Override:** Flagged by Security Rules!"
-        else:
-            final_pred = ml_pred
-            override_note = ""
-        
-        st.markdown("---")
-        st.subheader("📊 Analysis Results")
-        
-        if override_note:
-            st.warning(override_note)
-            
-        if final_pred.lower() == 'spam':
-            st.markdown(f'<div class="danger-box">🚨 FRAUD DETECTED! </div>', unsafe_allow_html=True)
-            st.metric("Confidence", f"{ml_conf:.2f}%")
-            
-            if matched_kw:
-                st.markdown("### 🔍 Triggered Keywords:")
-                for i, kw in enumerate(matched_kw, 1):
-                    st.markdown(f"{i}. **{kw.upper()}**")
-            
-            st.markdown("### ⚠️ Safety Recommendations:\n- Do NOT click links\n- Do NOT share BVN or bank details\n- Report and delete immediately")
-        else:
-            st.markdown(f'<div class="success-box">✅ MESSAGE IS SAFE ✅</div>', unsafe_allow_html=True)
-            st.metric("Confidence", f"{ml_conf:.2f}%")
-            st.success("No high-risk patterns detected.")
 
 st.markdown("---")
 st.markdown("<p style='text-align: center; color: #888;'>Built with ❤️ using Streamlit2026</p>", unsafe_allow_html=True)
