@@ -148,34 +148,96 @@ message_text = st.text_area("Paste SMS message here:",
 analyze_btn = st.button(" Analyze Message", use_container_width=True)
 
 # ==========================================
-# EXAMPLE MESSAGES SECTION
+# 4. INPUT & EXAMPLES SECTION
 # ==========================================
+
+# Initialize the text in the session state so it can be updated by buttons
+if 'message_text' not in st.session_state:
+    st.session_state.message_text = ""
+
+st.subheader("🔽 Input Your Message")
+
+# Link the text area to the session state
+message_text = st.text_area(
+    "Paste SMS message here:", 
+    value=st.session_state.message_text,
+    placeholder="Example: Dear, do you need a part-time job? You don't need to invest...",
+    height=150
+)
+
+# Example Buttons
 st.markdown("---")
-st.subheader(" Try These Examples:")
+st.subheader("📋 Try These Examples:")
 
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
     if st.button("💼 Job Scam", use_container_width=True):
-        st.session_state.example_msg = "Dear, do you need a part-time job? You don't need to invest. Our work is very simple. You only need to spend 10-30 minutes and pay your salary immediately after completing your mobile phone. Earn 60000NGN every day. If you want to join, please add us through WhatsApp."
+        st.session_state.message_text = "Dear, do you need a part-time job? You don't need to invest. Our work is very simple. You only need to spend 10-30 minutes and pay your salary immediately after completing your mobile phone. Earn 60000NGN every day. If you want to join, please add us through WhatsApp."
+        st.rerun()
 
 with col2:
     if st.button("🎁 APC Reward", use_container_width=True):
-        st.session_state.example_msg = "Your new reward is at congratulation to APC member you are just be Rewarded a token of 91,000 call Emma for your payment(08163700328)"
+        st.session_state.message_text = "Your new reward is at congratulation to APC member you are just be Rewarded a token of 91,000 call Emma for your payment(08163700328)"
+        st.rerun()
 
 with col3:
-    if st.button(" Bank Manager", use_container_width=True):
-        st.session_state.example_msg = "Dear friend, I am a bank manager in Nigeria. We have unclaimed funds. Help me transfer and get 20% commission."
+    if st.button("🏦 Bank Manager", use_container_width=True):
+        st.session_state.message_text = "Dear friend, I am a bank manager in Nigeria. We have unclaimed funds. Help me transfer and get 20% commission."
+        st.rerun()
 
 with col4:
     if st.button("✅ Safe Message", use_container_width=True):
-        st.session_state.example_msg = "Hey, are we still meeting for the project review at 2pm today? Let me know if you're coming."
+        st.session_state.message_text = "Hey, are we still meeting for the project review at 2pm today? Let me know if you're coming."
+        st.rerun()
 
-# If an example was clicked, populate the text area
-if 'example_msg' in st.session_state:
-    message_text = st.session_state.example_msg
-    # Clear the example after using it
-    del st.session_state.example_msg
+# ==========================================
+# 5. ANALYSIS LOGIC
+# ==========================================
+analyze_btn = st.button("🔍 Analyze Message", use_container_width=True)
+
+if analyze_btn:
+    if not message_text or len(message_text.strip()) == 0:
+        st.warning("⚠️ Please enter a message first!")
+        st.stop()
+
+    with st.spinner("🧠 Analyzing message patterns..."):
+        # (Keep your existing analysis logic here...)
+        cleaned_msg = clean_text(message_text)
+        msg_vec = vectorizer.transform([cleaned_msg])
+        
+        ml_pred = model.predict(msg_vec)[0]
+        ml_conf = max(model.predict_proba(msg_vec)[0]) * 100
+        
+        is_rule_spam, matched_kw = rule_based_scam_check(message_text)
+        
+        if ml_pred.lower() == 'ham' and is_rule_spam:
+            final_pred = 'spam'
+            override_note = "️ **AI Override:** Flagged by Security Rules!"
+        else:
+            final_pred = ml_pred
+            override_note = ""
+        
+        st.markdown("---")
+        st.subheader("📊 Analysis Results")
+        
+        if override_note:
+            st.warning(override_note)
+            
+        if final_pred.lower() == 'spam':
+            st.markdown(f'<div class="danger-box">🚨 FRAUD DETECTED! 🚨</div>', unsafe_allow_html=True)
+            st.metric("Confidence", f"{ml_conf:.2f}%")
+            
+            if matched_kw:
+                st.markdown("### 🔍 Triggered Keywords:")
+                for i, kw in enumerate(matched_kw, 1):
+                    st.markdown(f"{i}. **{kw.upper()}**")
+            
+            st.markdown("### ⚠️ Safety Recommendations:\n- Do NOT click links\n- Do NOT share BVN or bank details\n- Report and delete immediately")
+        else:
+            st.markdown(f'<div class="success-box">✅ MESSAGE IS SAFE ✅</div>', unsafe_allow_html=True)
+            st.metric("Confidence", f"{ml_conf:.2f}%")
+            st.success("No high-risk patterns detected.")
 # ==========================================
 # 5. ANALYSIS LOGIC
 # ==========================================
