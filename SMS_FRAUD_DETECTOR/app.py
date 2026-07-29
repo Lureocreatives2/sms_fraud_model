@@ -71,25 +71,27 @@ st.markdown("""
 # ==========================================
 # 2. LOAD MODELS 
 # ==========================================
-# ==========================================
-# 2. LOAD MODELS (With Path Fix & Spinner)
-# ==========================================
+
 @st.cache_resource
 def load_models():
     """Load the trained ML models and OCR engine."""
     import os
     
-    # Get the exact folder where app.py is located
     current_folder = os.path.dirname(os.path.abspath(__file__))
-    
-    # Create the full paths to the files
     model_path = os.path.join(current_folder, 'sms_fraud_model.pkl')
     vectorizer_path = os.path.join(current_folder, 'sms_vectorizer.pkl')
     
     try:
         model = joblib.load(model_path)
         vectorizer = joblib.load(vectorizer_path)
+        
+        # Initialize EasyOCR
         reader = easyocr.Reader(['en'], gpu=False)
+        
+        # MAGIC TRICK: Run a dummy text to force model download NOW 
+        # while the user is watching the loading spinner!
+        reader.readtext("test") 
+        
         return model, vectorizer, reader
     except Exception as e:
         st.error(f"❌ Failed to load models. Looking in: {current_folder}. Error: {e}")
@@ -131,11 +133,21 @@ def rule_based_scam_check(text):
     return False, []
 
 def extract_text_from_image(image, reader):
+    """Extracts text from an uploaded screenshot using OCR."""
     if image is None or reader is None:
         return ""
-    image_np = np.array(image)
-    results = reader.readtext(image_np)
-    return " ".join([result[1] for result in results]).strip()
+    try:
+        image_np = np.array(image)
+        results = reader.readtext(image_np)
+        
+        # If OCR finds nothing, return empty string
+        if not results:
+            return ""
+            
+        return " ".join([result[1] for result in results]).strip()
+    except Exception as e:
+        st.error(f"❌ OCR Error: Could not read text from this image. Please try a clearer screenshot or paste the text manually.")
+        return ""
 
 # ==========================================
 # 4. MAIN APP UI
