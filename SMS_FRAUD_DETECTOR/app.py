@@ -72,56 +72,26 @@ st.markdown("""
 # 2. LOAD MODELS
 # ==========================================
 @st.cache_resource
+@st.cache_resource
 def load_models():
+    """Load the trained ML models and OCR engine."""
+    import os
+    
+    # Get the exact folder where app.py is located
+    current_folder = os.path.dirname(os.path.abspath(__file__))
+    
+    # Create the full paths to the files
+    model_path = os.path.join(current_folder, 'sms_fraud_model.pkl')
+    vectorizer_path = os.path.join(current_folder, 'sms_vectorizer.pkl')
+    
     try:
-        model = joblib.load('sms_fraud_model.pkl')
-        vectorizer = joblib.load('sms_vectorizer.pkl')
+        model = joblib.load(model_path)
+        vectorizer = joblib.load(vectorizer_path)
         reader = easyocr.Reader(['en'], gpu=False)
         return model, vectorizer, reader
     except Exception as e:
-        st.error(f"❌ Failed to load models. Error: {e}")
+        st.error(f"❌ Failed to load models. Looking in: {current_folder}. Error: {e}")
         return None, None, None
-
-model, vectorizer, reader = load_models()
-
-if model is None:
-    st.stop()
-
-# ==========================================
-# 3. HELPER FUNCTIONS
-# ==========================================
-def clean_text(text):
-    text = str(text).lower()
-    text = re.sub(r'([a-zA-Z])(\d)', r'\1 \2', text)
-    text = re.sub(r'(\d)([a-zA-Z])', r'\1 \2', text)
-    text = text.translate(str.maketrans('', '', string.punctuation))
-    return text
-
-def rule_based_scam_check(text):
-    text_lower = text.lower()
-    phone_pattern = r'(\+234|0)[789][01]\d{8}'
-    has_phone = bool(re.search(phone_pattern, text))
-    
-    scam_keywords = ['reward', 'token', 'congratulation', 'apc', 'salary', 'ngn', 
-                     'naira', 'winner', 'claim', 'prize', 'urgent', 'bvn', 'atm', 
-                     'pin', 'transfer', 'inheritance', 'beneficiary', 'work', 
-                     'home', 'mobile', 'daily', 'part-time', 'invest',
-                     'bank', 'manager', 'unclaimed', 'funds', 'million', 
-                     'dollars', 'help me', 'dear friend', 'foreign']
-    
-    matched_keywords = [k for k in scam_keywords if k in text_lower]
-    
-    if (has_phone and len(matched_keywords) >= 1) or (len(matched_keywords) >= 3):
-        return True, matched_keywords
-    return False, []
-
-def extract_text_from_image(image, reader):
-    if image is None:
-        return ""
-    image_np = np.array(image)
-    results = reader.readtext(image_np)
-    return " ".join([result[1] for result in results]).strip()
-
 # ==========================================
 # 4. MAIN APP UI
 # ==========================================
