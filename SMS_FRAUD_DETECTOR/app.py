@@ -71,34 +71,36 @@ st.markdown("""
 # ==========================================
 # 2. LOAD MODELS 
 # ==========================================
+# ==========================================
+# 2. LOAD MODELS (With Path Fix & Spinner)
+# ==========================================
 @st.cache_resource
 def load_models():
     """Load the trained ML models and OCR engine."""
     import os
     
-    MODEL_VERSION = "2.1"  # Changed version to force reload
-    
+    # Get the exact folder where app.py is located
     current_folder = os.path.dirname(os.path.abspath(__file__))
+    
+    # Create the full paths to the files
     model_path = os.path.join(current_folder, 'sms_fraud_model.pkl')
     vectorizer_path = os.path.join(current_folder, 'sms_vectorizer.pkl')
     
     try:
         model = joblib.load(model_path)
         vectorizer = joblib.load(vectorizer_path)
-        
-        # TEMPORARILY DISABLE OCR - Comment this out for now
-        # reader = easyocr.Reader(['en'], gpu=False)
-        reader = None  # Temporary placeholder
-        
-      # Load the models with a loading spinner
+        reader = easyocr.Reader(['en'], gpu=False)
+        return model, vectorizer, reader
+    except Exception as e:
+        st.error(f"❌ Failed to load models. Looking in: {current_folder}. Error: {e}")
+        return None, None, None
+
+# Load the models with a loading spinner
 with st.spinner("⏳ Loading AI models and downloading OCR engine (this takes 2-3 minutes on first run)..."):
     model, vectorizer, reader = load_models()
 
 if model is None:
     st.stop()
-    except Exception as e:
-        st.error(f"❌ Failed to load models. Looking in: {current_folder}. Error: {e}")
-        return None, None, None
 
 # ==========================================
 # 3. HELPER FUNCTIONS (Must be at the very start of the line)
