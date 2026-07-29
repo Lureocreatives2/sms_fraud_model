@@ -77,24 +77,27 @@ def load_models():
     """Load the trained ML models and OCR engine."""
     import os
     
+    # Get the exact folder where app.py is located
     current_folder = os.path.dirname(os.path.abspath(__file__))
+    
+    # EXACT file names - do not change these!
     model_path = os.path.join(current_folder, 'sms_fraud_model.pkl')
     vectorizer_path = os.path.join(current_folder, 'sms_vectorizer.pkl')
     
     try:
+        # 1. Load the ML models
         model = joblib.load(model_path)
         vectorizer = joblib.load(vectorizer_path)
         
-        # Initialize EasyOCR
+        # 2. Load EasyOCR
         reader = easyocr.Reader(['en'], gpu=False)
         
-        # MAGIC TRICK: Run a dummy text to force model download NOW 
-        # while the user is watching the loading spinner!
-        reader.readtext("test") 
+        # 3. Pre-warm the OCR (dummy run to download models in background)
+        reader.readtext("hello") 
         
         return model, vectorizer, reader
     except Exception as e:
-        st.error(f"❌ Failed to load models. Looking in: {current_folder}. Error: {e}")
+        st.error(f"❌ Failed to load models. Error: {e}")
         return None, None, None
 
 # Load the models with a loading spinner
