@@ -104,8 +104,6 @@ def load_models():
 with st.spinner("⏳ Loading AI models and downloading OCR engine (this takes 2-3 minutes on first run)..."):
     model, vectorizer, reader = load_models()
 
-if model is None:
-    st.stop()
 
 # ==========================================
 # 3. HELPER FUNCTIONS (Must be at the very start of the line)
