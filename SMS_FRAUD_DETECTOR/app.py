@@ -111,17 +111,16 @@ st.markdown("""
 # 2. LOAD MODELS & OCR ENGINE
 # ==========================================
 @st.cache_resource
+@st.cache_resource
 def load_models():
     """Load the trained ML models and OCR engine."""
-    import os
-    
     try:
         model = joblib.load('sms_fraud_model.pkl')
         vectorizer = joblib.load('sms_vectorizer.pkl')
         reader = easyocr.Reader(['en'], gpu=False)
         return model, vectorizer, reader
     except Exception as e:
-        st.error(f" Failed to load models. Error: {e}")
+        st.error(f"❌ Failed to load models. Error: {e}")
         return None, None, None
 
 # Load the models
@@ -135,6 +134,12 @@ if model is None:
 # 3. HELPER FUNCTIONS
 # ==========================================
 def clean_text(text):
+    """Cleans text and separates mashed words."""
+    text = str(text).lower()
+    text = re.sub(r'([a-zA-Z])(\d)', r'\1 \2', text)
+    text = re.sub(r'(\d)([a-zA-Z])', r'\1 \2', text)
+    text = text.translate(str.maketrans('', '', string.punctuation))
+    return text
     # ... rest of your helper functions
 
 # ==========================================
