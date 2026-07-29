@@ -32,15 +32,43 @@ st.markdown("""
         border: 2px solid #ba55d3 !important;
         border-radius: 10px !important;
     }
-    .stButton>button {
-        background: linear-gradient(135deg, #ff00ff 0%, #ff1493 100%) !important;
-        color: white !important;
-        border: none !important;
+        /* Default buttons (Examples) */
+    .stButton>button[kind="secondary"], .stButton>button {
+        background: rgba(45, 27, 78, 0.8) !important;
+        color: #e0e0e0 !important;
+        border: 2px solid #ba55d3 !important;
         border-radius: 25px !important;
         font-weight: bold !important;
         padding: 10px 30px !important;
         width: 100%;
+        transition: all 0.3s ease !important;
     }
+    .stButton>button[kind="secondary"]:hover, .stButton>button:hover {
+        border-color: #ff00ff !important;
+        color: white !important;
+    }
+
+    /* The MAIN Analyze Button (Gold & Animated) */
+    .stButton>button[kind="primary"] {
+        background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%) !important;
+        color: #1a0f2e !important; /* Dark text for contrast */
+        border: 2px solid #FFD700 !important;
+        border-radius: 25px !important;
+        font-weight: 900 !important;
+        font-size: 1.2rem !important;
+        padding: 15px 30px !important;
+        width: 100%;
+        animation: pulse-glow 2s infinite;
+        transition: all 0.3s ease !important;
+    }
+
+    /* The Pulsing Animation */
+    @keyframes pulse-glow {
+        0% { box-shadow: 0 0 5px rgba(255, 215, 0, 0.5); transform: scale(1); }
+        50% { box-shadow: 0 0 25px rgba(255, 215, 0, 0.9); transform: scale(1.03); }
+        100% { box-shadow: 0 0 5px rgba(255, 215, 0, 0.5); transform: scale(1); }
+    }
+  
     .danger-box {
         background: linear-gradient(135deg, #ff00ff 0%, #ff1493 100%);
         padding: 20px;
@@ -167,29 +195,29 @@ st.subheader("📋 Try These Examples:")
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
-    if st.button("💼 Job Scam", use_container_width=True):
+    if st.button("💼 Job Scam", use_container_width=True, type="secondary"):
         st.session_state.message_text = "Dear, do you need a part-time job? You don't need to invest. Our work is very simple. You only need to spend 10-30 minutes and pay your salary immediately after completing your mobile phone. Earn 60000NGN every day. If you want to join, please add us through WhatsApp."
         st.rerun()
 
 with col2:
-    if st.button("🎁 APC Reward", use_container_width=True):
+    if st.button("🎁 APC Reward", use_container_width=True, type="secondary"):
         st.session_state.message_text = "Your new reward is at congratulation to APC member you are just be Rewarded a token of 91,000 call Emma for your payment(08163700328)"
         st.rerun()
 
 with col3:
-    if st.button("🏦 Bank Manager", use_container_width=True):
+    if st.button("🏦 Bank Manager", use_container_width=True, type="secondary"):
         st.session_state.message_text = "Dear friend, I am a bank manager in Nigeria. We have unclaimed funds. Help me transfer and get 20% commission."
         st.rerun()
 
 with col4:
-    if st.button("✅ Safe Message", use_container_width=True):
+    if st.button("✅ Safe Message", use_container_width=True, type="secondary"):
         st.session_state.message_text = "Hey, are we still meeting for the project review at 2pm today? Let me know if you're coming."
         st.rerun()
 
 # ==========================================
 # 5. ANALYSIS LOGIC
 # ==========================================
-analyze_btn = st.button("🔍 Analyze Message", use_container_width=True)
+analyze_btn = st.button("🔍 Analyze Message", use_container_width=True, type="primary")
 
 if analyze_btn:
     if not message_text or len(message_text.strip()) == 0:
