@@ -253,13 +253,15 @@ The application displays:
 
 ### Streamlit App
 
-🔗 **[INSERT YOUR STREAMLIT APP LINK HERE]**
+🔗 **https://smsfraudmodel-j3.streamlit.app/
+
+**
 
 ---
 
 ### Project Demonstration Video
 
-🎥 **[INSERT YOUR VIDEO LINK HERE]**
+🎥 **https://youtu.be/NcWMZ0O67To**
 
 ---
 
@@ -347,10 +349,8 @@ Nigerian-SMS-Fraud-Classifier/
 |------|---------|
 | **Project Name** | Nigerian SMS Fraud Classifier |
 | **Built By** | Opeyemi Adeshina |
-| **Fellow ID** | FE/26/7447858408 |
 | **Cohort** | AI & Machine Learning NextGen Cohort |
 | **Training Provider** | Teesas Education Ltd |
-| **Location** | Lagos, Nigeria |
 | **Email** | opeyemiolamide882@gmail.com |
 
 ---
