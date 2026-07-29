@@ -92,8 +92,7 @@ def load_models():
         # 2. Load EasyOCR
         reader = easyocr.Reader(['en'], gpu=False)
         
-        # 3. Pre-warm the OCR (dummy run to download models in background)
-        reader.readtext("hello") 
+       
         
         return model, vectorizer, reader
     except Exception as e:
