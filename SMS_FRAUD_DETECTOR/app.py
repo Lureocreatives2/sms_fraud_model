@@ -140,16 +140,7 @@ with st.sidebar:
     - ✅ Nigerian Context Aware
     """)
 
-st.subheader("🔽 Input Your Message")
-message_text = st.text_area(
-    "Paste SMS message here:", 
-    value=st.session_state.message_text,
-    placeholder="Example: Dear, do you need a part-time job? You don't need to invest...",
-    height=150,
-    key="sms_input"  
-)
 
-analyze_btn = st.button(" Analyze Message", use_container_width=True)
 
 # ==========================================
 # 4. INPUT & EXAMPLES SECTION
