@@ -111,29 +111,31 @@ st.markdown("""
 # 2. LOAD MODELS & OCR ENGINE
 # ==========================================
 @st.cache_resource
-@st.cache_resource
 def load_models():
     """Load the trained ML models and OCR engine."""
     import os
     
-    # Get the directory where app.py is located
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    
     try:
-        model_path = os.path.join(current_dir, 'sms_fraud_model.pkl')
-        vectorizer_path = os.path.join(current_dir, 'sms_vectorizer.pkl')
-        
-        # Debug: Print what we're looking for
-        st.write(f"Looking for models in: {current_dir}")
-        st.write(f"Files in directory: {os.listdir(current_dir)}")
-        
-        model = joblib.load(model_path)
-        vectorizer = joblib.load(vectorizer_path)
+        model = joblib.load('sms_fraud_model.pkl')
+        vectorizer = joblib.load('sms_vectorizer.pkl')
         reader = easyocr.Reader(['en'], gpu=False)
         return model, vectorizer, reader
     except Exception as e:
-        st.error(f"❌ Failed to load models. Error: {e}")
+        st.error(f" Failed to load models. Error: {e}")
         return None, None, None
+
+# Load the models
+model, vectorizer, reader = load_models()
+
+# Check if models loaded successfully
+if model is None:
+    st.stop()  # Stop execution if models failed to load
+
+# ==========================================
+# 3. HELPER FUNCTIONS
+# ==========================================
+def clean_text(text):
+    # ... rest of your helper functions
 
 # ==========================================
 # 3. HELPER FUNCTIONS
@@ -205,6 +207,7 @@ with st.sidebar:
     """)
 
 # Main Content Area
+   model, vectorizer, reader = load_models()
 if model is None:
     st.stop() # Stop execution if models failed to load
 
