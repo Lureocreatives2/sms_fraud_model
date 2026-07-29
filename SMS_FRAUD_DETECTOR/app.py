@@ -111,18 +111,29 @@ st.markdown("""
 # 2. LOAD MODELS & OCR ENGINE
 # ==========================================
 @st.cache_resource
+@st.cache_resource
 def load_models():
     """Load the trained ML models and OCR engine."""
+    import os
+    
+    # Get the directory where app.py is located
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    
     try:
-        model = joblib.load('sms_fraud_model.pkl')
-        vectorizer = joblib.load('sms_vectorizer.pkl')
+        model_path = os.path.join(current_dir, 'sms_fraud_model.pkl')
+        vectorizer_path = os.path.join(current_dir, 'sms_vectorizer.pkl')
+        
+        # Debug: Print what we're looking for
+        st.write(f"Looking for models in: {current_dir}")
+        st.write(f"Files in directory: {os.listdir(current_dir)}")
+        
+        model = joblib.load(model_path)
+        vectorizer = joblib.load(vectorizer_path)
         reader = easyocr.Reader(['en'], gpu=False)
         return model, vectorizer, reader
     except Exception as e:
-        st.error(f"❌ Failed to load models. Please ensure 'sms_fraud_model.pkl' and 'sms_vectorizer.pkl' are in the same folder as app.py. Error: {e}")
+        st.error(f"❌ Failed to load models. Error: {e}")
         return None, None, None
-
-model, vectorizer, reader = load_models()
 
 # ==========================================
 # 3. HELPER FUNCTIONS
