@@ -253,16 +253,15 @@ The application displays:
 
 ### Streamlit App
 
-🔗 **https://smsfraudmodel-j3.streamlit.app/
+🔗 https://smsfraudmodel-j3.streamlit.app/
 
-**
+
 
 ---
 
 ### Project Demonstration Video
 
-🎥 **https://youtu.be/NcWMZ0O67To**
-
+🎥 https://youtu.be/NcWMZ0O67To?si=Jf6XxdVRWO6AyM8v
 ---
 
 # 💻 Local Installation
